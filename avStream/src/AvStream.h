@@ -14,6 +14,7 @@ public:
     ~AvStream();
 protected:
     void onPlay();
+    void close();
 private:
     Ui::AvStreamClass *m_ui;
     QThread *m_tPlay;

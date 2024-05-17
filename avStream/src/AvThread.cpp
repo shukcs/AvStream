@@ -37,7 +37,7 @@ void AvThread::run()
     av_dict_set(&avdic, "stimeout", "2000000", 0);      ///设置超时断开连接时间，单位微秒"300000"，8);
     av_dict_set(&avdic, "max delay", "300000", 8);      ///设置最大时延*/
     //qDebug() << "url:" << m_url;
-    AVFormatContext  *pFormatctx = NULL;
+    AVFormatContext *pFormatctx = avformat_alloc_context();
     if (avformat_open_input(&pFormatctx, m_url.toLocal8Bit().data(), NULL, &avdic) != 0)
     {
         // 打开网络流或文件流qDebug("can't open the file. \n");
@@ -75,13 +75,16 @@ void AvThread::run()
     { // 无法找到解码器
         return;
     }
-    auto context = avcodec_alloc_context3(pCodec);
-    if (!context)
+    auto codec = avcodec_alloc_context3(pCodec);
+    if (!codec)
         return;
 
     // 打开编解码器
-    if (avcodec_open2(context, pCodec, NULL) < 0)
+    if (avcodec_open2(codec, pCodec, NULL) < 0)
+    {
+        avcodec_free_context(&codec);
         return; // 无法打开编解码器
+    }
 
     // 读取数据包
     AVPacket packet;
@@ -93,10 +96,10 @@ void AvThread::run()
         {
             if (packet.stream_index == videoStream)
             {
-                if (0 != avcodec_send_packet(context, &packet))
+                if (0 != avcodec_send_packet(codec, &packet))
                     break;
                 // 处理视频包
-                if (0 == avcodec_receive_frame(context, &frame))
+                if (0 == avcodec_receive_frame(codec, &frame))
                 {
                     swsCtx = readRgb(&frame, swsCtx);
                     break;
@@ -106,6 +109,9 @@ void AvThread::run()
         }
         sleep(10);
     }
+
+    avcodec_free_context(&codec);
+    avformat_close_input(&pFormatctx);
 }
 
 SwsContext *AvThread::readRgb(AVFrame *fr, SwsContext *ctx)

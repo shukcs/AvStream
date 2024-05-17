@@ -13,6 +13,7 @@ AvStream::AvStream(QWidget *parent) : QDialog(parent)
 AvStream::~AvStream()
 {
     delete m_ui;
+    close();
 }
 
 void AvStream::onPlay()
@@ -23,5 +24,26 @@ void AvStream::onPlay()
         t->SetUrl(m_ui->lineEdit->text());
         m_tPlay = t;
         m_tPlay->start();
+        m_ui->btm_play->setText(tr("Stop"));
+        connect(t, &AvThread::readFrame, m_ui->widget, &ImageWidget::ShowImage);
+    }
+    else
+    {
+        close();
+        m_ui->btm_play->setText(tr("Play"));
+    }
+}
+
+void AvStream::close()
+{
+    if (m_tPlay)
+    {
+        m_tPlay->terminate();
+        while (m_tPlay->isRunning())
+        {
+            QThread::msleep(1);
+        }
+        delete m_tPlay;
+        m_tPlay = NULL;
     }
 }

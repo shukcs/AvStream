@@ -2,6 +2,14 @@
 <ui version="4.0">
  <class>AvStreamClass</class>
  <widget class="QDialog" name="AvStreamClass">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>618</width>
+    <height>498</height>
+   </rect>
+  </property>
   <property name="windowTitle">
    <string>AvStream</string>
   </property>
@@ -85,7 +93,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QWidget" name="widget" native="true">
+    <widget class="ImageWidget" name="widget" native="true">
      <property name="minimumSize">
       <size>
        <width>600</width>
@@ -127,6 +135,14 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>ImageWidget</class>
+   <extends>QWidget</extends>
+   <header>ImageWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="AvStream.qrc"/>
  </resources>

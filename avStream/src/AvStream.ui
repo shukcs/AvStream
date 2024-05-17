@@ -139,13 +139,11 @@
   <customwidget>
    <class>ImageWidget</class>
    <extends>QWidget</extends>
-   <header>ImageWidget.h</header>
+   <header>src/ImageWidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="AvStream.qrc"/>
- </resources>
+ <resources/>
  <connections>
   <connection>
    <sender>btn_close</sender>

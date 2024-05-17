@@ -32,11 +32,6 @@ void AvThread::run()
     
     //分配AVFormatcontext，它是FFMPEG解封装(flv, mp4// ffmpeg取rtsp流时av_read frame阻塞的解决办法 设置参数优化
     AVDictionary* avdic = NULL;
- /*   av_dict_set(&avdic, "buffer size", "1024000", 0);   ///设置缓存大小，1080p可将值调大
-    av_dict_set(&avdic, "rtmp transport", "tcp", 0);    ///以udp方式打开，如果以tcp方式打开将udp卷
-    av_dict_set(&avdic, "stimeout", "2000000", 0);      ///设置超时断开连接时间，单位微秒"300000"，8);
-    av_dict_set(&avdic, "max delay", "300000", 8);      ///设置最大时延*/
-    //qDebug() << "url:" << m_url;
     AVFormatContext *pFormatctx = avformat_alloc_context();
     if (avformat_open_input(&pFormatctx, m_url.toLocal8Bit().data(), NULL, &avdic) != 0)
     {
@@ -88,7 +83,8 @@ void AvThread::run()
 
     // 读取数据包
     AVPacket packet;
-    AVFrame frame;
+    av_init_packet(&packet);
+    auto frame = av_frame_alloc();
     SwsContext *swsCtx = NULL;
     while (QThread::isRunning())
     {
@@ -99,17 +95,16 @@ void AvThread::run()
                 if (0 != avcodec_send_packet(codec, &packet))
                     break;
                 // 处理视频包
-                if (0 == avcodec_receive_frame(codec, &frame))
-                {
-                    swsCtx = readRgb(&frame, swsCtx);
-                    break;
-                }
+                if (0 == avcodec_receive_frame(codec, frame))
+                    swsCtx = readRgb(frame, swsCtx);
+
+                av_packet_unref(&packet);
             }
-            av_packet_unref(&packet);
         }
-        sleep(10);
+        msleep(10);
     }
 
+    av_frame_free(&frame);
     avcodec_free_context(&codec);
     avformat_close_input(&pFormatctx);
 }

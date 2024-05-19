@@ -26,6 +26,7 @@ void AvStream::onPlay()
         m_tPlay->start();
         m_ui->btm_play->setText(tr("Stop"));
         connect(t, &AvThread::readFrame, m_ui->widget, &ImageWidget::ShowImage);
+        connect(t, &AvThread::readAudio, m_ui->widget, &ImageWidget::PlaySound);
     }
     else
     {

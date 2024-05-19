@@ -52,6 +52,15 @@
     <ClCompile Include="GeneratedFiles\Release\moc_ImageWidget.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
+    <ClCompile Include="src\AudioDevice.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_AudioDevice.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_AudioDevice.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="src\AvStream.h">
@@ -65,6 +74,9 @@
     </CustomBuild>
     <CustomBuild Include="AvStream.qrc" />
     <CustomBuild Include="src\ImageWidget.h">
+      <Filter>src</Filter>
+    </CustomBuild>
+    <CustomBuild Include="src\AudioDevice.h">
       <Filter>src</Filter>
     </CustomBuild>
   </ItemGroup>

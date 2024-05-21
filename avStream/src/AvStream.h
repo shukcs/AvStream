@@ -5,7 +5,7 @@
 namespace Ui {
     class AvStreamClass;
 }
-class QThread;
+class AvThread;
 class AvStream : public QDialog
 {
     Q_OBJECT
@@ -17,5 +17,5 @@ protected:
     void close();
 private:
     Ui::AvStreamClass *m_ui;
-    QThread *m_tPlay;
+    AvThread *m_tPlay;
 };

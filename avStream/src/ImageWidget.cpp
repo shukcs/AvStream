@@ -18,12 +18,12 @@ void ImageWidget::PlaySound(const QByteArray &b, int samRate)
     if (!m_audio)
     {
         m_audio = new AudioDevice(this);
-        m_audio->start(samRate);
+        m_audio->Init(samRate);
     }
     m_audio->SetBuff(b.data(), b.size());
 }
 
-void ImageWidget::paintEvent(QPaintEvent *e)
+void ImageWidget::paintEvent(QPaintEvent *)
 {
     if (m_img.isNull())
         return;

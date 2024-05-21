@@ -1,18 +1,20 @@
 TARGET   = AvStream
 
-QT += core gui widgets
+QT += core gui widgets multimedia
 
-INCLUDEPATH +=  $$(FFMpeg)/include
+INCLUDEPATH +=  $$(FFMpeg)/include src
 
 HEADERS = \
     src/AvStream.h \
     src/AvThread.h \
-    src/ImageWidget.h
+    src/ImageWidget.h \
+    src/AudioDevice.h
 
 SOURCES = \
     src/AvStream.cpp \
     src/AvThread.cpp \
     src/ImageWidget.cpp \
+    src/AudioDevice.cpp \
     main.cpp
 
 RESOURCES += \
@@ -21,4 +23,5 @@ RESOURCES += \
 FORMS += \
     src/AvStream.ui \
 
-LIBS += -LE:\project\work\ffmpeg-7.0-full_build-shared\lib -lavcodec -lavformat -lswscale -lavutil
+LIBS += -L$$(FFMpeg)/lib
+LIBS += -lavcodec -lavformat -lswscale -lavutil -lswresample

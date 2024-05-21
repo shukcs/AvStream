@@ -1,5 +1,6 @@
 #include "AvThread.h"
 #include <QImage>
+#include <QAudioOutput>
 #include <qlogging.h>
 
 extern "C" {
@@ -14,7 +15,7 @@ extern "C" {
 #include <libswresample/swresample.h>
 }
 
-AvThread::AvThread(QObject *p) : QThread(p)
+AvThread::AvThread(QObject *p) : QThread(p), m_bRun(false), m_bFinish(false)
 {
     avformat_network_init();// 初始化网络库
 }
@@ -22,6 +23,26 @@ AvThread::AvThread(QObject *p) : QThread(p)
 AvThread::~AvThread()
 {
     avformat_network_deinit();
+}
+
+void AvThread::SetRunning(bool b)
+{
+    if (b == m_bRun)
+        return;
+    m_bRun = b;
+    if (b)
+    {
+        m_bFinish = false;
+        start();
+    }
+    else
+    {
+        for (int i =0; !m_bFinish && i<1000; ++i)
+        {
+            QThread::msleep(1);
+        }
+        terminate();
+    }
 }
 
 void AvThread::SetUrl(const QString &url)
@@ -35,17 +56,17 @@ void AvThread::run()
     
     //分配AVFormatcontext，它是FFMPEG解封装(flv, mp4// ffmpeg取rtsp流时av_read frame阻塞的解决办法 设置参数优化
     AVDictionary* avdic = NULL;
-    av_dict_set(&avdic, "stimeout", "3000000", 0);
+    //av_dict_set(&avdic, "stimeout", "10000", 0);
     AVFormatContext *pFormatctx = avformat_alloc_context();
     if (avformat_open_input(&pFormatctx, m_url.toLocal8Bit().data(), NULL, &avdic) != 0)
     {
-        // 打开网络流或文件流qDebug("can't open the file. \n");
+        m_bFinish = true;
         return;
     }
     if (avformat_find_stream_info(pFormatctx, &avdic) < 0)
     {
         // 读取流数据包并获取流的相关信息
-        //qDebug() << "not find stream info!";
+        m_bFinish = true;
         return;
     }
     int videoStream = -1;
@@ -64,7 +85,7 @@ void AvThread::run()
     }
     if (videoStream < 0)
     {
-//        qDebug() << "No video stream!";
+        m_bFinish = true;
         return;
     }
     /// 获取视频流的编解码器上下文
@@ -73,6 +94,7 @@ void AvThread::run()
     if (pCodec == NULL)
     { // 无法找到解码器
         avformat_close_input(&pFormatctx);
+        m_bFinish = true;
         return;
     }
 
@@ -80,6 +102,7 @@ void AvThread::run()
     if (!codec)
     {
         avformat_close_input(&pFormatctx);
+        m_bFinish = true;
         return;
     }
 
@@ -104,9 +127,9 @@ void AvThread::run()
     SwsContext *swsCtx = NULL;
     SwrContext *swrCtx = NULL;
     AVChannelLayout ch;
-    while (QThread::isRunning())
+    while (m_bRun)
     {
-        while (av_read_frame(pFormatctx, &packet) >= 0)
+        while (m_bRun && (av_read_frame(pFormatctx, &packet) >= 0))
         {
             if (packet.stream_index == videoStream)
             {
@@ -129,7 +152,7 @@ void AvThread::run()
                 av_packet_unref(&packet);
             }
         }
-        msleep(10);
+        msleep(1);
     }
     av_channel_layout_uninit(&ch);
     sws_freeContext(swsCtx);
@@ -138,6 +161,7 @@ void AvThread::run()
     avcodec_free_context(&codec);
     avcodec_free_context(&codecACtx);
     avformat_close_input(&pFormatctx);
+    m_bFinish = true;
 }
 
 SwsContext *AvThread::readRgb(AVFrame *fr, SwsContext *ctx)
@@ -172,9 +196,8 @@ SwrContext * AvThread::readFrAudio(AVFrame *fr, SwrContext *ctx, AVChannelLayout
     data[0] = (uint8_t *)arr.data();
     auto len = swr_convert(ctx, data, fr->nb_samples, fr->data, fr->nb_samples);
     if (len > 0)
-    {
-        emit readAudio(arr, fr->nb_samples);
-    }
+        emit readAudio(arr, fr->sample_rate);
+
     return ctx;
 }
 

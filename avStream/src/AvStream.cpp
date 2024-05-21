@@ -23,7 +23,7 @@ void AvStream::onPlay()
         auto t = new AvThread(this);
         t->SetUrl(m_ui->lineEdit->text());
         m_tPlay = t;
-        m_tPlay->start();
+        m_tPlay->SetRunning(true);
         m_ui->btm_play->setText(tr("Stop"));
         connect(t, &AvThread::readFrame, m_ui->widget, &ImageWidget::ShowImage);
         connect(t, &AvThread::readAudio, m_ui->widget, &ImageWidget::PlaySound);
@@ -39,11 +39,7 @@ void AvStream::close()
 {
     if (m_tPlay)
     {
-        m_tPlay->terminate();
-        while (m_tPlay->isRunning())
-        {
-            QThread::msleep(1);
-        }
+        m_tPlay->SetRunning(false);
         delete m_tPlay;
         m_tPlay = NULL;
     }

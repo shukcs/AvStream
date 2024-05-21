@@ -13,6 +13,7 @@ public:
     AvThread(QObject *p=NULL);
     ~AvThread();
 
+    void SetRunning(bool b);
     void SetUrl(const QString &url);
     void run()override;
 protected:
@@ -23,5 +24,7 @@ signals:
     void readAudio(const QByteArray &, int samRate);
 private:
     QString m_url;
+    bool m_bRun;
+    bool m_bFinish;
 };
 

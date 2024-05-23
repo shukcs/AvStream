@@ -1,91 +1,58 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Generated Files">
-      <UniqueIdentifier>{71ED8ED8-ACB9-4CE9-BBE1-E00B30144E11}</UniqueIdentifier>
-      <Extensions>moc;h;cpp</Extensions>
-      <SourceControlFiles>False</SourceControlFiles>
-    </Filter>
-    <Filter Include="Generated Files\Debug">
-      <UniqueIdentifier>{732054a8-0382-42fa-ad62-f2ada50516d4}</UniqueIdentifier>
-      <Extensions>cpp;moc</Extensions>
-      <SourceControlFiles>False</SourceControlFiles>
-    </Filter>
-    <Filter Include="Generated Files\Release">
-      <UniqueIdentifier>{1e740854-33d0-44f1-8cd9-20122808ae92}</UniqueIdentifier>
-      <Extensions>cpp;moc</Extensions>
-      <SourceControlFiles>False</SourceControlFiles>
-    </Filter>
     <Filter Include="src">
       <UniqueIdentifier>{7db8f283-fdcb-4f9a-a25c-2613b1d6e25f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="httpExt">
+      <UniqueIdentifier>{548c20b7-560a-4d31-bc80-ff21ac326174}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AvStream.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_AvStream.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_AvStream.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
     <ClCompile Include="src\AvThread.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_AvThread.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_AvThread.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\qrc_AvStream.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="src\ImageWidget.cpp">
       <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_ImageWidget.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_ImageWidget.cpp">
-      <Filter>Generated Files\Release</Filter>
     </ClCompile>
     <ClCompile Include="src\AudioDevice.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_AudioDevice.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_AudioDevice.cpp">
-      <Filter>Generated Files\Release</Filter>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="httpExt\HttpExtSessions.cpp">
+      <Filter>httpExt</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="src\AvStream.h">
+    <QtUic Include="src\AvStream.ui">
       <Filter>src</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\AvStream.ui">
-      <Filter>src</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\AvThread.h">
-      <Filter>src</Filter>
-    </CustomBuild>
-    <CustomBuild Include="AvStream.qrc" />
-    <CustomBuild Include="src\ImageWidget.h">
-      <Filter>src</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\AudioDevice.h">
-      <Filter>src</Filter>
-    </CustomBuild>
+    </QtUic>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GeneratedFiles\ui_AvStream.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AvThread.h">
-      <Filter>Generated Files</Filter>
+    <QtMoc Include="src\ImageWidget.h">
+      <Filter>src</Filter>
+    </QtMoc>
+    <QtMoc Include="src\AudioDevice.h">
+      <Filter>src</Filter>
+    </QtMoc>
+    <QtMoc Include="src\AvStream.h">
+      <Filter>src</Filter>
+    </QtMoc>
+    <QtMoc Include="src\AvThread.h">
+      <Filter>src</Filter>
+    </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <QtRcc Include="AvStream.qrc">
+      <Filter>src</Filter>
+    </QtRcc>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="httpExt\HttpExtSessions.h">
+      <Filter>httpExt</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

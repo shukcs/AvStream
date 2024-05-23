@@ -25,6 +25,9 @@
     <ClCompile Include="httpExt\HttpExtSessions.cpp">
       <Filter>httpExt</Filter>
     </ClCompile>
+    <ClCompile Include="httpExt\UrlParse.cpp">
+      <Filter>httpExt</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="src\AvStream.ui">
@@ -44,6 +47,9 @@
     <QtMoc Include="src\AvThread.h">
       <Filter>src</Filter>
     </QtMoc>
+    <QtMoc Include="httpExt\HttpExtSessions.h">
+      <Filter>httpExt</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="AvStream.qrc">
@@ -51,7 +57,7 @@
     </QtRcc>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="httpExt\HttpExtSessions.h">
+    <ClInclude Include="httpExt\UrlParse.h">
       <Filter>httpExt</Filter>
     </ClInclude>
   </ItemGroup>

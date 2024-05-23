@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="httpExt\HttpExtSessions.cpp" />
+    <ClCompile Include="httpExt\UrlParse.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\AudioDevice.cpp" />
     <ClCompile Include="src\AvStream.cpp" />
@@ -30,6 +31,9 @@
     <QtMoc Include="src\AvStream.h" />
     <QtMoc Include="src\AvThread.h" />
     <QtMoc Include="httpExt\HttpExtSessions.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="httpExt\UrlParse.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B12702AD-ABFB-343A-A199-8E24837244A3}</ProjectGuid>

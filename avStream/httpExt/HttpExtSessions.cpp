@@ -2,6 +2,7 @@
 #include <QSettings>
 #include <QApplication>
 #include <QTcpSocket>
+#include "UrlParse.h"
 
 int getProtocalDefPort(const QString &prot)
 {
@@ -64,6 +65,21 @@ const QMap<QString, QString> & HttpExtSessions::AllSectorsReply() const
     return m_sects;
 }
 
+void HttpExtSessions::PutContent(const QString &url, const QString &type, const QByteArray &content)
+{
+    AddSector("Content-type", type);
+    AddSector("Content-length", QString::number(content.size()));
+    m_content = content;
+    emit beginSession(url, "PUT", "1.1");
+}
+
+void HttpExtSessions::PostContent(const QString &url, const QByteArray &content)
+{
+    AddSector("Content-length", QString::number(content.size()));
+    m_content = content;
+    emit beginSession(url, "POST", "1.1");
+}
+
 void HttpExtSessions::BeginSession(const QString &url, const QString &sesion, const char *proVer)
 {
     if (m_curSession)
@@ -72,34 +88,37 @@ void HttpExtSessions::BeginSession(const QString &url, const QString &sesion, co
     emit beginSession(url, sesion, proVer);
 }
 
+const QString & HttpExtSessions::MyUserAgent()
+{
+    static QString sAg = "Qt+HttpExtSessions";
+    return sAg;
+}
+
 void HttpExtSessions::_beginSession(const QString &url, const QString &sesion /*= "GET"*/, const char *proVer)
 {
     if (m_curSession)
         return;
-    m_bFinish = false;
-    m_readArray.clear();
-    auto index = url.lastIndexOf("://");
-    auto protocal = index > 0 ? url.left(index) : "http";///默认协议http
 
-    auto tmp = index > 0 ? url.mid(index + 3) : url;
-    index = tmp.indexOf("/");
-    auto host = index > 0 ? tmp.left(index) : tmp;
-    AddSector("Host", host);
-    auto ls = host.split(":", QString::SkipEmptyParts);
+    QString protocal;
+    QString host;
     auto port = -1;
-    if (ls.size() == 2)
-    {
-        host = ls.first();
-        port = ls.back().toInt();
-    }
-    tmp = index > 0 ? tmp.mid(index) : "/";
+    QString refUrl;
+    url_this(url, protocal, host, port, refUrl);
     if (port <= 0)
         port = getProtocalDefPort(protocal);
-    QString ver = proVer ? proVer : (protocal == "http" ? "1.1" : "1.0");
+    genSector(sesion.toUpper(), host);
+
+    QString ver = "1.0";
+    if (protocal == "http")
+        ver = "1.1";
+
     m_curSession = new QTcpSocket(this);
     connect(m_curSession, &QTcpSocket::connected, this, [=] {
-        m_curSession->write(_get(sesion, tmp, protocal.toUpper()+ "/" + ver));
+        m_curSession->write(_get(sesion, refUrl, protocal.toUpper()+ "/" + ver));
+        if (!m_content.isEmpty())
+            m_curSession->write(m_content);
         m_sects.clear();
+        m_content.clear();
     });
     connect(m_curSession, &QTcpSocket::disconnected, this, [=] {
         m_curSession->deleteLater();
@@ -161,4 +180,80 @@ void HttpExtSessions::parse()
     }
     if (right > 0)
         m_readArray = m_readArray.mid(right);
+}
+
+void HttpExtSessions::url_this(const QString &url_in, QString &protocol, QString &host, int &port, QString &url)
+{
+    UrlParse pa(url_in, "/");
+    QString user;
+    QString auth;
+    if (url_in.indexOf("://") > 0)
+        protocol = pa.getword(); // http
+    else
+        protocol = "http:";
+
+    port = -1;
+    if (protocol.toLower() == "https:")
+    {
+#ifdef HAVE_OPENSSL
+        EnableSSL();
+#else
+        printf("url_this: SSL not available!\n");
+#endif
+        port = 443;
+    }
+    else if (protocol.toLower() == "http:")
+    {
+        port = 80;
+    }
+    protocol.replace(":", "");
+    if (port < 0)
+        port = getProtocalDefPort(protocol);
+
+    host = pa.getword();
+    auto pos = host.indexOf("@");
+    if (pos >= 0)
+    {
+        user = host.mid(0, pos);
+        host = host.mid(pos + 1);
+        if (user.indexOf(":") >= 0)
+        {
+            AddSector("Authorization", "Basic " + user.toUtf8().toBase64());
+        }
+    }
+    if (host.contains(":"))
+    {
+        UrlParse pa(host, ":");
+        pa.getword(host);
+        port = pa.getvalue();
+    }
+}
+
+void HttpExtSessions::genSector(const QString &sc, const QString &host)
+{
+    if (sc == "HTTP" || sc == "HTTPS")
+    {
+        if (m_sects.find("Accept") == m_sects.end())
+            AddSector("Accept", "*");
+        if (m_sects.find("Accept-Language") == m_sects.end())
+            AddSector("Accept-Language", "en-us,en;q=0.5");
+        if (m_sects.find("Accept-Encoding") == m_sects.end())
+            AddSector("Accept-Encoding", "gzip,deflate");
+        if (m_sects.find("Accept-Charset") == m_sects.end())
+            AddSector("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
+        AddSector("User-agent", MyUserAgent());
+    }
+    else if (sc == "PUT")
+    {
+        AddSector("Host", host);
+        AddSector("User-agent", MyUserAgent());
+    }
+    else if (sc == "POST")
+    {
+        AddSector("Host", host); // oops - this is actually a request header that we're adding..
+        AddSector("User-agent", MyUserAgent());
+        AddSector("Accept", "text/html, text/plain, */*;q=0.01");
+        AddSector("Connection", "close");
+        AddSector("Content-type", "application/x-www-form-urlencoded");
+    }
 }

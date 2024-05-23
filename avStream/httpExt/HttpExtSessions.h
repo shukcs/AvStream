@@ -22,11 +22,17 @@ public:
     void SetConnectTimeout(int ms = 1000);
     void SetCommTimeout(int ms=3000);
     const QMap<QString, QString> &AllSectorsReply()const;
+    void PutContent(const QString &url, const QString &type, const QByteArray &content);
+    void PostContent(const QString &url, const QByteArray &content);
     void BeginSession(const QString &url, const QString &sesion = "GET", const char *proVer = NULL);
+
+    static const QString &MyUserAgent();
 protected:
     void _beginSession(const QString &url, const QString &sesion, const char *proVer);
     QByteArray _get(const QString &sesion, const QString &url, const QString &prot);
     void parse();
+    void url_this(const QString &url_in, QString &protocol, QString &host, int &port, QString &url);
+    void genSector(const QString &sesion, const QString &host);
 signals:
     void sessionConstruct(const QString &key);
     void sessionReply(bool);
@@ -42,6 +48,7 @@ private:
     bool m_bFinish;
     QTcpSocket *m_curSession;
     QByteArray m_readArray;
+    QByteArray m_content;
     QMap<QString, QString>  m_sects;
 };
 

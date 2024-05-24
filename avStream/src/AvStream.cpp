@@ -20,7 +20,7 @@ AvStream::~AvStream()
 void AvStream::onPlay()
 {
     auto s = new HttpExtSessions(this);
-    s->BeginSession(m_ui->lineEdit->text());
+    s->BeginRtsp(m_ui->lineEdit->text());
     //if (!m_tPlay)
     //{
     //    auto t = new AvThread(this);

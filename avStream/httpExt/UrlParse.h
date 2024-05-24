@@ -48,6 +48,7 @@ public:
 	size_t getptr() { return pa_the_ptr; }
 	void EnableQuote(bool b) { pa_quote = b; }
 
+    static void ParseUrl(const QString &url_in, QString &protocol, QString &host, int &port, QString &url, QString &rest);
 private:
 	QString pa_the_str;
 	QString pa_splits;

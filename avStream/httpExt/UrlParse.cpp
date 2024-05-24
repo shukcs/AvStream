@@ -1,8 +1,31 @@
+#include "UrlParse.h"
 #include <stdlib.h>
 #include <cstring>
+#include <QSettings>
+#include <QApplication>
 
-#include "UrlParse.h"
-
+int getProtocalDefPort(const QString &prot)
+{
+    QSettings settings(QApplication::applicationDirPath() + "/config.ini", QSettings::IniFormat);
+    auto protocal = prot.toLower();
+    auto ret = -1;
+    settings.beginGroup("protocalPorts");
+    if (protocal == "http")
+        ret = settings.value(protocal, 80).toInt();
+    else if (protocal == "https")
+        ret = settings.value(protocal, 443).toInt();
+    else if (protocal == "rtsp")
+        ret = settings.value(protocal, 554).toInt();
+    else if (protocal == "rtmp")
+        ret = settings.value(protocal, 1935).toInt();
+    else ///其他默认端口在config.ini【protocalPorts】填好
+        ret = settings.value(protocal, -1).toInt();
+    settings.endGroup();
+    return ret;
+}
+///////////////////////////////////////////////////////////////////////
+//UrlParse
+///////////////////////////////////////////////////////////////////////
 UrlParse::UrlParse()
 :pa_the_str("")
 ,pa_splits("")
@@ -273,10 +296,34 @@ void UrlParse::getline(QString&s)
 	s = pa_ord;
 }
 
-/* end of implementation of class UrlParse */
-/***************************************************/
-#ifdef SOCKETS_NAMESPACE
-}
+void UrlParse::ParseUrl(const QString &url_in, QString &protocol, QString &host, int &port, QString &url, QString &rest)
+{
+    UrlParse pa(url_in, "/");
+    QString user;
+    QString auth;
+    if (url_in.indexOf("://") > 0)
+        protocol = pa.getword(); // http
+    else
+        protocol = "http:";
+
+    if (protocol.toLower() == "https:")
+    {
+#ifdef HAVE_OPENSSL
+        EnableSSL();
+#else
+        printf("url_this: SSL not available!\n");
 #endif
+    }
+    protocol.replace(":", "");
+    port = getProtocalDefPort(protocol);
+    host = pa.getword();
+    url = "/" + pa.getrest();
+    auto idx = url.indexOf(":");
+    if (idx > 0)
+    {
+        rest = url.mid(idx + 1);
+        url = url.left(idx);
+    }
+}
 
 

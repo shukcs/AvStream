@@ -67,6 +67,7 @@ private:
     QByteArray m_readArray;
     QByteArray m_content;
     QString m_curUrl;
+    QString m_takon;
     QString m_curSession;
     QMap<QString, QString>  m_sects;
 };

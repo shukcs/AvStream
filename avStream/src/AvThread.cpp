@@ -56,15 +56,15 @@ void AvThread::run()
     
     //分配AVFormatcontext，它是FFMPEG解封装(flv, mp4// ffmpeg取rtsp流时av_read frame阻塞的解决办法 设置参数优化
     AVDictionary* avdic = NULL;
-    av_dict_set(&avdic, "stimeout", "1000000", 0);  //连接建立时间.5s
-    av_dict_set(&avdic, "timeout", "3000000", 0);   //读取超时时间3s
+    //av_dict_set(&avdic, "stimeout", "1000000", 0);  //连接建立时间.5s
+    //av_dict_set(&avdic, "timeout", "3000000", 0);   //读取超时时间3s
     AVFormatContext *pFormatctx = avformat_alloc_context();
     if (avformat_open_input(&pFormatctx, m_url.toLocal8Bit().data(), NULL, &avdic) != 0)
     {
         m_bFinish = true;
         return;
     }
-    if (avformat_find_stream_info(pFormatctx, &avdic) < 0)
+    if (avformat_find_stream_info(pFormatctx, NULL) < 0)
     {
         // 读取流数据包并获取流的相关信息
         m_bFinish = true;
@@ -98,7 +98,7 @@ void AvThread::run()
         m_bFinish = true;
         return;
     }
-
+    av_read_play(pFormatctx);
     auto codec = avcodec_alloc_context3(pCodec);
     if (!codec)
     {

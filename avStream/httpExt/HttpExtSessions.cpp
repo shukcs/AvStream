@@ -1,6 +1,7 @@
 ﻿#include "HttpExtSessions.h"
 #include <QTcpSocket>
 #include <QUdpSocket>
+#include <QTimer>
 #include "UrlParse.h"
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -139,8 +140,8 @@ void HttpExtSessions::parse()
     {
         auto right = 0;
         auto pos = m_readArray.indexOf("\r\n");
-        const static QRegExp reg = QRegExp("[=:]");
         m_replyLength = -1;
+        m_takon.clear();
         while (pos >= 0)
         {
             auto str = m_readArray.mid(right, pos - right);
@@ -158,11 +159,13 @@ void HttpExtSessions::parse()
                 }
                 break;
             }
-            auto tmp = reg.indexIn(str);
-            if (tmp > 0 && str.at(tmp) == ':')
+            auto tmp = str.indexOf(":");
+            if (tmp > 0)
             {
-                if (0==str.left(tmp).compare("Content-Length", Qt::CaseInsensitive))
+                if (0 == str.left(tmp).compare("Content-Length", Qt::CaseInsensitive))
                     m_replyLength = str.mid(tmp + 1).toInt();
+                else if ("SETUP"==m_curSession && !str.left(tmp).compare("Session", Qt::CaseInsensitive))
+                    m_takon = str.mid(tmp + 1);
             }
             else
             {
@@ -179,7 +182,9 @@ void HttpExtSessions::parse()
         m_tcp->deleteLater();
         m_tcp = NULL;
         if (!m_curSession.isEmpty() && !ls.isEmpty())
-            rtspNext(ls.first());
+        {
+            QTimer::singleShot(1, this, [=] {rtspNext(ls.first());});
+        }
     }
     for (auto &itr : ls)
     {
@@ -206,6 +211,8 @@ void HttpExtSessions::url_this(const QString &url_in, QString &protocol, QString
     }
     if (m_type == SS_RTSP)
         url = "rtsp://"+ host + url;
+    if (m_curSession == "SETUP")
+        url += "/streamid=1";
     if (host.contains(":"))
     {
         UrlParse pa(host, ":");
@@ -242,10 +249,13 @@ void HttpExtSessions::genSector(const QString &sc, const QString &host)
     {
         static uint32_t sSeq = 1;
         addSector("CSeq", QString::number(sSeq++));
+        if (!m_takon.isEmpty())
+            addSector("Session", m_takon);
+        addSector("User-agent", MyUserAgent());
         if (sc == "DESCRIBE")
             addSector("Accept", "application/*");
         else if (sc == "SETUP")
-            addSector("Transport", "RTP/AVP;unicast;client_port="+getPort());
+            addSector("Transport", "RTP/AVP/TCP;unicast;interleaved=0-1");
         //else if (sc == "PLAY")
     }
 }
@@ -276,6 +286,8 @@ QString HttpExtSessions::nextSesion(const QString &sesion)
 {
     if (0 == sesion.compare("DESCRIBE", Qt::CaseInsensitive))
         return "SETUP";
+
+    return QString();
 }
 
 QString HttpExtSessions::getPort() const

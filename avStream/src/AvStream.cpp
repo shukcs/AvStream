@@ -1,6 +1,6 @@
 #include "AvStream.h"
 #include "AvThread.h"
-#include "httpExt/HttpExtSessions.h"
+#include "Rtsp.h"
 
 #include "ui_AvStream.h"
 
@@ -19,7 +19,7 @@ AvStream::~AvStream()
 
 void AvStream::onPlay()
 {
-    auto s = new HttpExtSessions(this);
+    auto s = new Rtsp(this);
     s->BeginRtsp(m_ui->lineEdit->text());
     /*if (!m_tPlay)
     {

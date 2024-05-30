@@ -28,6 +28,15 @@
     <ClCompile Include="httpExt\UrlParse.cpp">
       <Filter>httpExt</Filter>
     </ClCompile>
+    <ClCompile Include="src\Rtsp.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\IPCommon.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\comm_func.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="src\AvStream.ui">
@@ -41,14 +50,17 @@
     <QtMoc Include="src\AudioDevice.h">
       <Filter>src</Filter>
     </QtMoc>
-    <QtMoc Include="src\AvStream.h">
-      <Filter>src</Filter>
-    </QtMoc>
     <QtMoc Include="src\AvThread.h">
       <Filter>src</Filter>
     </QtMoc>
     <QtMoc Include="httpExt\HttpExtSessions.h">
       <Filter>httpExt</Filter>
+    </QtMoc>
+    <QtMoc Include="src\Rtsp.h">
+      <Filter>src</Filter>
+    </QtMoc>
+    <QtMoc Include="src\AvStream.h">
+      <Filter>src</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
@@ -59,6 +71,15 @@
   <ItemGroup>
     <ClInclude Include="httpExt\UrlParse.h">
       <Filter>httpExt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\comm_func.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rtsp_os.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\IPCommon.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

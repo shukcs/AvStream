@@ -24,6 +24,7 @@ public:
         S_Describe,
         S_Setup,
         S_Play,
+        S_GetParam,
         S_Finshed,
     };
     struct StreamFormat
@@ -32,8 +33,14 @@ public:
         uint32_t m_typeCodec;
         uint32_t index;
         uint32_t header;
+        struct
+        {
+            uint32_t smpRate; //音频采样率
+            uint32_t channel; //音频通道
+        };
         const AVCodec *codec = NULL;
         AVCodecContext *ctx = NULL;
+        QString m_control;
     };
 public:
     Rtsp(QObject *p = NULL, bool useTcp=false);
@@ -62,7 +69,7 @@ signals:
     void readAudio(const QByteArray &bts, int sr);
     void readFrame(const QImage &);
 private:
-    void writeSesion(int sock, const QString &url);
+    void writeSesion(int sock, const QString &url, const QString &session);
     void rtspNext(const QString &sesion);
     QString curSession()const;
     QString getTransport()const;
@@ -75,6 +82,7 @@ private:
     void initCodec();
     void ininitCodec();
     StreamFormat *getStream(int index);
+    QString sessionName(Session)const;
 private:
     int m_sockRtp;
     int m_sockRtcp;
@@ -85,6 +93,7 @@ private:
     bool m_bPlay;
     bool m_bUseTcp;
     int m_nSetup;
+    int64_t m_msLastHb;
 
     AVFrame *m_frame = NULL;
     SwsContext *m_swsCtx = NULL;

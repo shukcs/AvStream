@@ -1,5 +1,6 @@
 #include "Rtsp.h"
 #include <QImage>
+#include <QDateTime>
 #include "comm_func.h"
 #include "httpExt/UrlParse.h"
 
@@ -132,7 +133,7 @@ Rtsp::StreamFormat::StreamFormat(uint32_t c, uint32_t i, uint32_t h)
 //////////////////////////////////////////////////////////////////////////////////////////////
 Rtsp::Rtsp(QObject *p, bool bUseTcp) : QThread(p), m_sockRtp(-1), m_sockRtcp(-1)
 , m_udpPort(13000), m_sock(-1), m_replyLength(0), m_session(S_None), m_bPlay(false)
-, m_bUseTcp(false)
+, m_bUseTcp(false), m_msLastHb(0)
 {
     connect(this, &QThread::finished, this, [=] {
         delete this;
@@ -183,6 +184,14 @@ void Rtsp::run()
         if (m_bPlay)
         {
             recvUdp();
+            auto ms = QDateTime::currentMSecsSinceEpoch();
+            if (ms - m_msLastHb > 1000 * 10)///ÐÄÌø
+            {
+                writeSesion(m_sock, url, sessionName(S_GetParam));
+                QByteArray arr(1024 * 8, 0);
+                tcp_recv_msg(m_sock, arr.data(), arr.size());
+                m_msLastHb = ms;
+            }
             continue;
         }
         url_this(m_curUrl, host, port, url);
@@ -195,7 +204,7 @@ void Rtsp::run()
                 break;
             }
         }
-        writeSesion(m_sock, url);
+        writeSesion(m_sock, url, curSession());
         if (!_recv() || !parse())
             break;
     }
@@ -287,7 +296,7 @@ void Rtsp::url_this(const QString &url_in, QString &host, int &port, QString &ur
     }
     url = "rtsp://" + host + url;
     if (m_session == S_Setup)
-        url += "/streamid=" + QString::number(m_nSetup);
+        url += "/" + m_streams.at(m_nSetup).m_control;
     
     if (host.contains(":"))
     {
@@ -316,12 +325,12 @@ void Rtsp::genSector(const QString &sc)
         addSector("Range", "npt=0.000-");
 }
 
-void Rtsp::writeSesion(int sock, const QString &url)
+void Rtsp::writeSesion(int sock, const QString &url, const QString &session)
 {
     if (m_sock > 0)
     {
-        genSector(curSession());
-        auto arr = _get(curSession(), url, "RTSP/1.0");
+        genSector(session);
+        auto arr = _get(session, url, "RTSP/1.0");
         if (!arr.isEmpty())
             tcp_write_msg(sock, arr.data(), arr.size());
     }
@@ -345,9 +354,8 @@ void Rtsp::rtspNext(const QString &reply)
                 m_session = m_nSetup<m_streams.size() ? m_session : S_Play;
                 break;
             case Rtsp::S_Play:
-                socket_close(m_sock);
-                m_sock = -1;
                 m_bPlay = true;
+                m_msLastHb = QDateTime::currentMSecsSinceEpoch();
                 break;
             case Rtsp::S_Finshed:
                 break;
@@ -365,9 +373,7 @@ void Rtsp::rtspNext(const QString &reply)
 
 QString Rtsp::curSession() const
 {
-    static QMap<Session, QString> sSessionMap = { { S_Option, "OPTIONS" }, {S_Describe, "DESCRIBE"},{ S_Setup, "SETUP" }, {S_Play, "PLAY"} };
-    auto itr = sSessionMap.find(m_session);
-    return itr != sSessionMap.end() ? itr.value() : QString();
+    return sessionName(m_session);
 }
 
 QString Rtsp::getTransport() const
@@ -408,9 +414,10 @@ bool Rtsp::parseContent()
                             index = AVMEDIA_TYPE_VIDEO;
                     }
                 }
-                if (auto item = index >= 0 ? getStream(index) : NULL)
+                bool bParse = str.left(tmp) == "a" && index >= 0;
+                if (auto item = bParse ? getStream(index) : NULL)
                 {
-                    if (item->index == AVMEDIA_TYPE_VIDEO &&  str.left(tmp) == "a" && str.mid(tmp + 1, 6) == "rtpmap")
+                    if (str.mid(tmp + 1, 6) == "rtpmap")
                     {
                         auto &ls = str.mid(tmp + 1).split(" ", QString::SkipEmptyParts);
                         if (ls.size() > 1)
@@ -420,17 +427,24 @@ bool Rtsp::parseContent()
                                 item->header = lsTmp.at(1).toInt();
                             lsTmp = ls.at(1).split("/");
                             if (lsTmp.size() > 1)
-                                item->m_typeCodec = getCodecId(lsTmp.at(0));
+                            {
+                                if (item->index == AVMEDIA_TYPE_AUDIO && lsTmp.size()>2)
+                                {
+                                    item->smpRate = lsTmp.at(1).toInt();
+                                    item->channel = lsTmp.at(2).toInt();
+                                }
+                                else
+                                {
+                                    item->m_typeCodec = getCodecId(lsTmp.at(0));
+                                }
+                            }
                         }
                     }
-                    else if (item->index == AVMEDIA_TYPE_AUDIO && str.left(tmp) == "a" && str.mid(tmp + 1, 4)=="fmtp")
+                    else if (item->index == AVMEDIA_TYPE_AUDIO && str.mid(tmp + 1, 4)=="fmtp")
                     {
                         auto &ls = str.mid(tmp + 1).split(" ", QString::SkipEmptyParts);
                         if (ls.size() > 1)
                         {
-                            auto lsTmp = ls.at(0).split(":", QString::SkipEmptyParts);
-                            if (lsTmp.size() > 1)
-                                item->header = lsTmp.at(1).toInt();
                             for (auto &itr : ls.at(1).split(";"))
                             {
                                 auto lsTmp2 = itr.split("=", QString::SkipEmptyParts);
@@ -438,6 +452,12 @@ bool Rtsp::parseContent()
                                     item->m_typeCodec = getCodecId(lsTmp2.back().toLower());
                             }
                         }
+                    }
+                    else if (str.mid(tmp + 1, 7) == "control")
+                    {
+                        auto &ls = str.mid(tmp + 1).split(":", QString::SkipEmptyParts);
+                        if (ls.size() > 1)
+                            item->m_control = ls.last();
                     }
                 }
             }
@@ -527,6 +547,8 @@ void Rtsp::recvUdp()
         m_session = S_Describe;
         m_takon.clear();
         m_nSetup = 0;
+        socket_close(m_sock);
+        m_sock = -1;
         return;
     }
 
@@ -645,4 +667,17 @@ void Rtsp::removeSector(const QString &key)
 void Rtsp::clearSector()
 {
     m_sects.clear();
+}
+
+QString Rtsp::sessionName(Session sc) const
+{
+    static QMap<Session, QString> sSessionMap = {
+        { S_Option, "OPTIONS" },
+        { S_Describe, "DESCRIBE" },
+        { S_Setup, "SETUP" },
+        { S_Play, "PLAY" },
+        { S_GetParam, "GET_PARAMETER" }
+    };
+    auto itr = sSessionMap.find(sc);
+    return itr != sSessionMap.end() ? itr.value() : QString();
 }
